@@ -1,7 +1,7 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
-const Corrosion = require('corrosion');
+const Corrosion = require('../lib/server');
 
 const server = http.createServer();
 const proxy = new Corrosion({
