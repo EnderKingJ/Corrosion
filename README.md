@@ -22,8 +22,18 @@ Successor to [Alloy](https://github.com/titaniumnetwork-dev/alloy).
 
 # Installation
 
-```
+```js
 npm i corrosion
+
+"in your js file:"
+require("corrosion")
+```
+OR
+```console
+git clone https://github.com/EnderKingJ/Simplified-Corrosion.git
+cd Simplified-Corrosion
+npm install
+npm start
 ```
 # Public Deployment Example
 
