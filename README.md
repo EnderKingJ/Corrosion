@@ -7,15 +7,8 @@ Successor to [Alloy](https://github.com/titaniumnetwork-dev/alloy).
 - [Corrosion](#corrosion)
   - [Table of Contents](#table-of-contents)
 - [Installation](#installation)
-- [Basic Example](#basic-example)
 - [Public Deployment Example](#public-deployment-example)
   - [Initial Setup](#initial-setup)
-  - [Testing](#testing)
-  - [Persistence](#persistence)
-    - [PM2](#pm2)
-    - [systemd](#systemd)
-  - [Nginx Setup](#nginx-setup)
-  - [Letsencrypt](#letsencrypt)
   - [Frontend Examples](#frontend-examples)
 - [Advanced Configuration](#advanced-configuration)
 - [Middleware](#middleware)
@@ -32,24 +25,6 @@ Successor to [Alloy](https://github.com/titaniumnetwork-dev/alloy).
 ```
 npm i corrosion
 ```
-
-# Basic Example
-
-```javascript
-const Corrosion = require('corrosion');
-const proxy = new Corrosion();
-const http = require('http')
-http.createServer((req, res) => 
-  proxy.request(req, res) // Request Proxy
-).on('upgrade', (req, socket, head) => 
-  proxy.upgrade(req, socket, head) // WebSocket Proxy
-).listen(80);
-```
-
-Access a website by going to `/prefix/gateway?url=URL`.
-
-Much more in depth one is in the [demo folder](demo/).
-
 # Public Deployment Example
 
 For implementing a Corrosion server into your production website, we recommend you follow the below configuration.
@@ -64,13 +39,19 @@ For implementing a Corrosion server into your production website, we recommend y
     <head>
         <style>
             body {
-                text-align: center;
+                height: 100vh;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                background: #222;
+                color: white;
             }
         </style>
     </head>
     <body>
-        <form action="/get/gateway/" method="POST">
-            <input name="url" placeholder="Search the web">
+        <form action="/service/gateway/" method="POST">
+            Corrosion<br><br>
+            <input name="url" placeholder="Search the web"><br>
             <input type="submit" value="Go">
         </form>
     </body>
@@ -98,6 +79,7 @@ server.on('request', (request, response) => {
     response.end(fs.readFileSync(__dirname + '/index.html', 'utf-8'));
 }).on('upgrade', (clientRequest, clientSocket, clientHead) => proxy.upgrade(clientRequest, clientSocket, clientHead)).listen(8443); // port other than 443 if it is needed by other software.
 ```
+Access a Website by going to ```https://your-url.com/service/gateway?url=https://url-to-proxify.com```
 ## Frontend Examples
 
 [Holy Unblocker](https://github.com/titaniumnetwork-dev/Holy-Unblocker)
