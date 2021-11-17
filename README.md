@@ -80,18 +80,12 @@ For implementing a Corrosion server into your production website, we recommend y
 `index.js`
 
 ```javascript
-// https here is necesary for some features to work, even if this is going to be behind an SSL-providing reverse proxy.
-const https = require('https');
+const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const Corrosion = require('corrosion');
 
-// you are free to use self-signed certificates here, if you plan to route through an SSL-providing reverse proxy.
-const ssl = {
-    key: fs.readFileSync(path.join(__dirname, '/ssl.key')),
-    cert: fs.readFileSync(path.join(__dirname, '/ssl.cert')),
-};
-const server = https.createServer(ssl);
+const server = http.createServer();
 const proxy = new Corrosion({
     codec: 'xor', // apply basic xor encryption to url parameters in an effort to evade filters. Optional.
     prefix: '/get/' // specify the endpoint (prefix). Optional.
@@ -104,118 +98,6 @@ server.on('request', (request, response) => {
     response.end(fs.readFileSync(__dirname + '/index.html', 'utf-8'));
 }).on('upgrade', (clientRequest, clientSocket, clientHead) => proxy.upgrade(clientRequest, clientSocket, clientHead)).listen(8443); // port other than 443 if it is needed by other software.
 ```
-
-In the same directory in which you saved the above files, generate some self-signed SSL certificates.
-
-```shell-session
-root@corrosion:~$ openssl req -nodes -new -x509 -keyout ssl.key -out ssl.cert
-```
-
-## Testing
-
-Run the server to ensure everything is working.
-
-```shell-session
-root@corrosion:~$ node index.js &; cpid=$!
-root@corrosion:~$ curl -k "https://localhost:8443/get/hvtrs8%2F-ezaopne%2Ccmm" 
-<html>
-<head>
-    <title>Example Domain</title>
-...
-user@corrosion:~$ kill $cpid
-```
-
-Now, you can setup this server to run as a service. Two popular options are PM2 (tailored for NodeJS applications) and systemd.
-
-## Persistence
-
-### PM2
-
-```shell-session
-root@corrosion:~$ npm i pm2 -g
-root@corrosion:~$ pm2 start index.js
-root@corrosion:~$ pm2 startup
-root@corrosion:~$ pm2 save
-```
-
-### systemd
-
-```
-[Unit]
-Description=Corrosion
-After=network-online.target
-Wants=network-online.target systemd-networkd-wait-online.service
-
-StartLimitIntervalSec=500
-StartLimitBurst=5
-
-[Service]
-Restart=on-failure
-RestartSec=5s
-
-WorkingDirectory=/root/corrosion/path/to/server
-ExecStart=/usr/bin/env node index.js
-
-[Install]
-WantedBy=multi-user.target
-```
-
-Save the above in /lib/systemd/system/corrosion.service
-
-```shell-session
-root@corrosion:~$ chmod 644 /lib/systemd/system/corrosion.service
-root@corrosion:~$ systemctl daemon-reload
-root@corrosion:~$ systemctl start corrosion
-root@corrosion:~$ systemctl enable corrosion
-```
-
-## Nginx Setup
-
-Setup the Nginx reverse proxy to serve Corrosion and certbot to obtain Letsencrypt certificates.
-
-```shell-session
-root@corrosion:~$ apt install -y nginx python3 python3-venv libaugeas0
-root@corrosion:~$ python3 -m venv /opt/certbot/
-root@corrosion:~$ /opt/certbot/bin/pip install --upgrade pip
-root@corrosion:~$ /opt/certbot/bin/pip install certbot certbot-nginx
-root@corrosion:~$ ln -s /opt/certbot/bin/certbot /usr/bin/certbot
-```
-
-Now, create the following Nginx config in `/etc/nginx/sites-enabled/corrosion`. All of the header options are important and necesary. 
-
-```
-server {
-    root /var/www/path/to/webroot;
-    server_name your.domain.com;
-
-    location / {
-        proxy_set_header Accept-Encoding "";
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-Host $host:$server_port;
-        proxy_set_header X-Forwarded-Server $host;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "Upgrade";   
-        proxy_pass https://127.0.0.1:8443;  # the port it's listening on
-        proxy_http_version 1.1; 
-        proxy_set_header Host $host;
-    }
-
-    listen 80;
-}
-```
-
-## Letsencrypt
-
-Finally, get our Letsencrypt certificates and restart nginx!
-
-```shell-session
-root@corrosion:~$ certbot --nginx -d <your domain>
-root@corrosion:~$ systemctl restart nginx
-```
-
-Your site should be working now. If you want to add a custom frontend to make it usable, you should expand the index.js to serve your frontend. This can be easily integrated with Express and other NodeJS webserver frameworks. See some examples of proxy frontends that use Corrosion.
-
 ## Frontend Examples
 
 [Holy Unblocker](https://github.com/titaniumnetwork-dev/Holy-Unblocker)
