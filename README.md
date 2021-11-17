@@ -109,7 +109,7 @@ Access a Website by going to ```https://your-url.com/service/gateway?url=https:/
 Middleware are functions that will be executed either before request or after response. These can alter the way a request is made or response is sent.
 
 ```javascript
-function(ctx) {r
+function(ctx) {
   ctx.body; // (Request / Response) Body (Will return null if none)
   ctx.headers; // (Request / Response) Headers
   ctx.url; // WHATWG URL
