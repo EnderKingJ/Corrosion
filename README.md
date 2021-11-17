@@ -69,7 +69,8 @@ const Corrosion = require('corrosion');
 const server = http.createServer();
 const proxy = new Corrosion({
     codec: 'xor', // apply basic xor encryption to url parameters in an effort to evade filters. Optional.
-    prefix: '/service/' // specify the endpoint (prefix). Optional.
+    prefix: '/service/', // specify the endpoint (prefix). Optional.
+    requestMiddleware: [Corrosion.middleware.https()] // encode HTTPS:// protocol on urls, fixes Corrosion on Heroku and Repl.it
 });
 
 proxy.bundleScripts();
